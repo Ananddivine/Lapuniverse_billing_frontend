@@ -20,13 +20,13 @@ const Invoices = () => {
 
   // Print the invoice
   const printInvoice = (invoicePdf) => {
-    const pdfUrl = `https://lapuniversebillingbackend-production.up.railway.ap/uploads/${invoicePdf}`;  // Use relative path from DB
+    const pdfUrl = `https://lapuniversebillingbackend-production.up.railway.app/uploads/${invoicePdf}`;  // Use relative path from DB
     const printWindow = window.open(pdfUrl, "_blank");
     printWindow.print();
   };
   
   const downloadInvoice = (invoicePdf, invoiceNumber) => {
-    const pdfUrl = `https://lapuniversebillingbackend-production.up.railway.ap/uploads/${invoicePdf}`;  // Use relative path from DB
+    const pdfUrl = `https://lapuniversebillingbackend-production.up.railway.app/uploads/${invoicePdf}`;  // Use relative path from DB
     const link = document.createElement('a');
     link.href = pdfUrl;
     link.download = `Invoice_${invoiceNumber}.pdf`; // Set filename for download
