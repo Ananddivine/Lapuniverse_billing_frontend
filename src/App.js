@@ -12,17 +12,22 @@ const App = () => {
   return (
     <Router>
       <div className="flex">
+        {/* Sidebar */}
         <Sidebar />
-        <div className="flex-1">
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-h-screen">
+          {/* Navbar */}
           <Navbar />
-          <div className="p-4">
+          {/* Page Content */}
+          <div className="flex-1 p-4">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/customers" element={<Customers />} />
-              <Route path="invoices" element={<Invoices />} />
+              <Route path="/invoices" element={<Invoices />} />
             </Routes>
           </div>
+          {/* Footer at Bottom */}
           <Footer />
         </div>
       </div>

@@ -25,6 +25,7 @@ const Invoices = () => {
     printWindow.print();
   };
   
+  // Download the invoice
   const downloadInvoice = (invoicePdf, invoiceNumber) => {
     const pdfUrl = `https://lapuniversebillingbackend-production.up.railway.app/uploads/${invoicePdf}`;  // Use relative path from DB
     const link = document.createElement('a');
@@ -32,7 +33,29 @@ const Invoices = () => {
     link.download = `Invoice_${invoiceNumber}.pdf`; // Set filename for download
     link.click();
   };
-  
+
+  // Delete the invoice
+  const deleteInvoice = async (invoiceId) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this invoice?");
+    if (confirmDelete) {
+      try {
+        const response = await fetch(`${API_URL}/invoices/delete/${invoiceId}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          setInvoices(invoices.filter((invoice) => invoice._id !== invoiceId));
+          alert("Invoice deleted successfully");
+        } else {
+          const data = await response.json();
+          alert(data.message || "Failed to delete the invoice");
+        }
+      } catch (error) {
+        console.error("Error deleting invoice:", error);
+        alert("Something went wrong!");
+      }
+    }
+  };
 
   return (
     <div>
@@ -49,9 +72,15 @@ const Invoices = () => {
             </button>
             <button
               onClick={() => downloadInvoice(invoice.invoicePdf, invoice.invoiceNumber)}
-              className="bg-green-500 text-white p-2 rounded"
+              className="bg-green-500 text-white p-2 rounded mr-2"
             >
               Download Invoice
+            </button>
+            <button
+              onClick={() => deleteInvoice(invoice._id)}
+              className="bg-red-500 text-white p-2 rounded"
+            >
+              Delete Invoice
             </button>
           </li>
         ))}

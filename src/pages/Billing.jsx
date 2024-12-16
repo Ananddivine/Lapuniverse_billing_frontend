@@ -4,13 +4,36 @@ import { jsPDF } from "jspdf";
 const Billing = () => {
   const [products, setProducts] = useState([{ name: "", price: "", quantity: 1 }]);
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
-  const [invoiceNumber, setInvoiceNumber] = useState("0001");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [lastInvoiceNumber, setLastInvoiceNumber] = useState("");
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerNumber, setCustomerNumber] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [gstNumber, setGstNumber] = useState("");
   const [taxPercent, setTaxPercent] = useState(18);
   const [subtotal, setSubtotal] = useState(0);
   const [tax, setTax] = useState(0);
   const [total, setTotal] = useState(0);
+
+  // Fetch last invoice number from backend on component mount
+  useEffect(() => {
+    const fetchLastInvoiceNumber = async () => {
+      try {
+        const response = await fetch("https://lapuniversebillingbackend-production.up.railway.app/api/invoices/last");
+        if (response.ok) {
+          const data = await response.json();
+          setLastInvoiceNumber(data.lastInvoiceNumber || "0000");
+          setInvoiceNumber((parseInt(data.lastInvoiceNumber || "0000", 10) + 1).toString().padStart(4, "0"));
+        } else {
+          console.error("Failed to fetch last invoice number");
+        }
+      } catch (error) {
+        console.error("Error fetching last invoice number:", error);
+      }
+    };
+
+    fetchLastInvoiceNumber();
+  }, []);
 
   // Calculate totals whenever products or taxPercent change
   useEffect(() => {
@@ -44,21 +67,28 @@ const Billing = () => {
     setProducts(products.filter((_, i) => i !== index));
   };
 
-  // Submit invoice data to backend
+  // Handle invoice submission
   const submitInvoice = async () => {
+    // Check if customer name, email, or number is empty
+    if (!customerName || !customerNumber || !customerEmail) {
+      alert("Customer name, email, and phone number are required!");
+      return;
+    }
+
     const invoiceData = {
       invoiceDate,
       invoiceNumber,
       customerName,
+      customerEmail,
+      customerNumber,
       gstNumber,
       taxPercent,
       products,
       subtotal,
       tax,
       total,
-      
     };
-  
+
     try {
       const response = await fetch("https://lapuniversebillingbackend-production.up.railway.app/api/invoices/create", {
         method: "POST",
@@ -67,13 +97,14 @@ const Billing = () => {
         },
         body: JSON.stringify(invoiceData),
       });
-  
+
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json();
         alert("Invoice saved successfully!");
         console.log(data);
       } else {
-        alert("Failed to save the invoice!");
+        alert(data.message || "Failed to save the invoice!");
       }
     } catch (error) {
       console.error("Error saving invoice:", error);
@@ -83,10 +114,7 @@ const Billing = () => {
 
   // Print invoice
   const printInvoice = async () => {
-    // First, save the invoice
     await submitInvoice();
-
-    // After saving, trigger the print functionality
     window.print();
   };
 
@@ -95,16 +123,18 @@ const Billing = () => {
     const doc = new jsPDF();
     doc.text(`Invoice Date: ${invoiceDate}`, 10, 10);
     doc.text(`Invoice Number: ${invoiceNumber}`, 10, 20);
-    doc.text(`customerName: ${customerName}`, 10, 30);
-    doc.text(`GST Number: ${gstNumber}`, 10, 40);
-    doc.text(`Tax Percentage: ${taxPercent}%`, 10, 50);
-    doc.text(`Subtotal: ₹${subtotal.toFixed(2)}`, 10, 60);
-    doc.text(`Tax: ₹${tax.toFixed(2)}`, 10, 70);
-    doc.text(`Total: ₹${total.toFixed(2)}`, 10, 80);
+    doc.text(`Customer Name: ${customerName}`, 10, 30);
+    doc.text(`Customer Number: ${customerName}`, 10, 40);
+    doc.text(`Customer Email: ${customerName}`, 10, 50);
+    doc.text(`GST Number: ${gstNumber}`, 10, 60);
+    doc.text(`Tax Percentage: ${taxPercent}%`, 10, 70);
+    doc.text(`Subtotal: ₹${subtotal.toFixed(2)}`, 10, 80);
+    doc.text(`Tax: ₹${tax.toFixed(2)}`, 10, 90);
+    doc.text(`Total: ₹${total.toFixed(2)}`, 10, 100);
 
-    let yOffset = 80;
+    let yOffset = 100;
     doc.text("Products:", 10, yOffset);
-    products.forEach((product, _index) => {
+    products.forEach((product) => {
       yOffset += 10;
       doc.text(`${product.name} - ₹${product.price} x ${product.quantity}`, 10, yOffset);
     });
@@ -126,21 +156,50 @@ const Billing = () => {
           />
         </div>
         <div>
-          <label className="block font-semibold">Invoice Number</label>
+          <label className="block font-semibold">
+            Invoice Number 
+            <span className="text-red-500"> (Last: {lastInvoiceNumber})</span>
+          </label>
           <input
             type="text"
             value={invoiceNumber}
             onChange={(e) => setInvoiceNumber(e.target.value)}
             className="w-full border rounded p-2"
+            placeholder={`Next: ${(parseInt(lastInvoiceNumber || "0000", 10) + 1).toString().padStart(4, "0")}`}
+            required
           />
         </div>
         <div>
-          <label className="block font-semibold">customerName</label>
+          <label className="block font-semibold">Customer Name</label>
           <input
             type="text"
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             className="w-full border rounded p-2"
+            placeholder="Enter Customer Name"
+            required
+          />
+        </div>
+        <div>
+          <label className="block font-semibold">Customer Mobile Number</label>
+          <input
+            type="number"
+            value={customerNumber}
+            onChange={(e) => setCustomerNumber(e.target.value)}
+            className="w-full border rounded p-2"
+            placeholder="Enter Customer Mobile Number"
+            required
+          />
+        </div>
+        <div>
+          <label className="block font-semibold">Customer Email Id</label>
+          <input
+            type="email"
+            value={customerEmail}
+            onChange={(e) => setCustomerEmail(e.target.value)}
+            className="w-full border rounded p-2"
+            placeholder="Enter Customer Email Id"
+            required
           />
         </div>
         <div>
@@ -187,42 +246,22 @@ const Billing = () => {
                 onChange={(e) => handleProductChange(index, "quantity", e.target.value)}
                 className="w-32 border rounded p-2"
               />
-              <button
-                onClick={() => removeProduct(index)}
-                className="bg-red-500 text-white p-2 rounded"
-              >
-                Remove
-              </button>
+              <button onClick={() => removeProduct(index)} className="text-red-500">Remove</button>
             </div>
           ))}
-          <button onClick={addProduct} className="bg-blue-500 text-white p-2 rounded">
-            Add Product
-          </button>
+          <button onClick={addProduct} className="text-blue-500">Add Product</button>
         </div>
-        <div className="mt-4 border-t pt-4">
-          <h3 className="font-bold">Invoice Summary</h3>
+
+        <div className="mt-4">
           <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
           <p>Tax ({taxPercent}%): ₹{tax.toFixed(2)}</p>
-          <p className="font-bold">Total: ₹{total.toFixed(2)}</p>
+          <p>Total: ₹{total.toFixed(2)}</p>
         </div>
-        <button
-          onClick={submitInvoice}
-          className="bg-green-500 text-white p-2 rounded mt-4"
-        >
-          Save Invoice
-        </button>
-        <button
-          onClick={printInvoice}
-          className="bg-blue-500 text-white p-2 rounded mt-4"
-        >
-          Print Invoice
-        </button>
-        <button
-          onClick={downloadInvoice}
-          className="bg-purple-500 text-white p-2 rounded mt-4"
-        >
-          Download Invoice
-        </button>
+        <div className="mt-4 flex space-x-4">
+          <button onClick={printInvoice} className="bg-blue-500 text-white p-2 rounded">Print Invoice</button>
+          <button onClick={downloadInvoice} className="bg-green-500 text-white p-2 rounded">Download PDF</button>
+          <button onClick={submitInvoice} className="bg-yellow-500 text-white p-2 rounded">Save Invoice</button>
+        </div>
       </div>
     </div>
   );
