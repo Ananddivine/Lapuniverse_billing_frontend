@@ -60,7 +60,7 @@ const Billing = () => {
     };
   
     try {
-      const response = await fetch("http://localhost:5000/api/invoices/create", {
+      const response = await fetch("https://lapuniverse_billing_backend.up.railway.app.railway.app/api/invoices/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
