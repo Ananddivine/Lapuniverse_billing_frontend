@@ -19,7 +19,7 @@ const Billing = () => {
   useEffect(() => {
     const fetchLastInvoiceNumber = async () => {
       try {
-        const response = await fetch("https://lapuniversebillingbackend-production.up.railway.app/api/invoices/last");
+        const response = await fetch("https://lapuniverse.com:5000/api/invoices/last");
         if (response.ok) {
           const data = await response.json();
           setLastInvoiceNumber(data.lastInvoiceNumber || "0000");
@@ -90,7 +90,7 @@ const Billing = () => {
     };
 
     try {
-      const response = await fetch("https://lapuniversebillingbackend-production.up.railway.app/api/invoices/create", {
+      const response = await fetch("https://lapuniverse.com:5000/api/invoices/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
